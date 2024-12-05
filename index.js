@@ -295,7 +295,20 @@ function isMatched(actual, expected) {
     if (process.env.GRPC_MOCK_COMPARE && process.env.GRPC_MOCK_COMPARE == "sparse") {
       return partial_compare(actual, expected);
     }
-    return JSON.stringify(actual) === JSON.stringify(expected);
+    // Sort keys of both objects before comparing
+    const sortAndStringify = (obj) => {
+      if (typeof obj !== 'object' || obj === null) return JSON.stringify(obj);
+      if (Array.isArray(obj)) {
+        return `[${obj.map(sortAndStringify).join(',')}]`;
+      }
+      const sortedKeys = Object.keys(obj).sort();
+      const sortedObj = sortedKeys.reduce((result, key) => {
+        result[key] = obj[key];
+        return result;
+      }, {});
+      return JSON.stringify(sortedObj);
+    };
+    return sortAndStringify(actual) === sortAndStringify(expected);
   }
 }
 
